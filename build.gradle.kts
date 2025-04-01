@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.netty:netty-all:4.2.0.RC4")
+    implementation("io.netty:netty-all:5.0.0.Alpha2")
 }
 
 tasks.test {
