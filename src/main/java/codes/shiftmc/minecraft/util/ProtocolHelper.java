@@ -38,4 +38,21 @@ public final class ProtocolHelper {
         buf.readBytes(bytes);
         return new String(bytes, StandardCharsets.UTF_8);
     }
+
+    public static void writeVarInt(ByteBuf buf, int value) {
+        do {
+            byte temp = (byte)(value & 0b01111111);
+            value >>>= 7;
+            if (value != 0) {
+                temp |= (byte) 0b10000000;
+            }
+            buf.writeByte(temp);
+        } while (value != 0);
+    }
+
+    public static void writeString(ByteBuf buf, String value) {
+        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        writeVarInt(buf, bytes.length);
+        buf.writeBytes(bytes);
+    }
 }

@@ -2,6 +2,7 @@ package codes.shiftmc.minecraft.netty;
 
 import codes.shiftmc.minecraft.server.ProtocolState;
 import codes.shiftmc.minecraft.server.packet.client.handshake.ClientHandshakePacket;
+import codes.shiftmc.minecraft.server.packet.server.status.ResponsePacket;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -32,12 +33,9 @@ public class MinecraftPacketDecoder extends ByteToMessageDecoder {
             case HANDSHAKING:
                 if (packetId == 0x00) {
                     var packet = ClientHandshakePacket.deserialize(in);
+                    System.out.println("Handshake: " + packet);
 
-                    System.out.println("ProtocolVersion: " + packet.protocolVersion());
-                    System.out.println("ServerAddress: " + packet.serverAddress());
-                    System.out.println("ServerPort: " + packet.serverPort());
-                    System.out.println("Intent: " + packet.intent());
-
+                    ctx.writeAndFlush(new ResponsePacket());
                     ctx.channel().attr(STATE_KEY).set(ProtocolState.values()[packet.intent().id()]);
                 }
                 break;
