@@ -48,6 +48,7 @@ public class MinecraftPacketDecoder extends ByteToMessageDecoder {
                     System.out.println("Status: " + packet);
 
                     ctx.writeAndFlush(new PongResponsePacket(packet.time()));
+                    ctx.close();
                 }
                 break;
             case LOGIN:
