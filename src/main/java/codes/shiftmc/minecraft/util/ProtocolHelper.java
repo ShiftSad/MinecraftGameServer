@@ -1,7 +1,7 @@
 package codes.shiftmc.minecraft.util;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.CorruptedFrameException;
+import io.netty.buffer.EmptyByteBuf;
 
 import java.nio.charset.StandardCharsets;
 
@@ -31,17 +31,19 @@ public final class ProtocolHelper {
     }
 
     public static int readVarInt(ByteBuf buf) {
+        if (buf instanceof EmptyByteBuf) {
+            return -1;
+        }
+
         int numRead = 0;
         int result = 0;
         byte read;
-        int initialReaderIndex = buf.readerIndex(); // Store initial index for reset on INCOMPLETE only
+        int initialReaderIndex = buf.readerIndex();
 
         do {
-            // Check BEFORE reading if bytes are available
             if (!buf.isReadable()) {
-                // Not enough data to continue reading the VarInt
-                buf.readerIndex(initialReaderIndex); // Reset to before we started
-                throw new CorruptedFrameException("Cannot read full VarInt, buffer exhausted"); // Or return -1 if framer handles it
+                buf.readerIndex(initialReaderIndex);
+                return -1;
             }
 
             read = buf.readByte();
@@ -51,8 +53,7 @@ public final class ProtocolHelper {
             numRead++;
             if (numRead > 5) {
                 // Malformed VarInt - DO NOT RESET INDEX
-                // Throw exception so the framer knows it's bad data
-                throw new CorruptedFrameException("VarInt is too big (read " + numRead + " bytes)");
+                return -1;
             }
         } while ((read & 0b10000000) != 0); // Check continuation bit
 

@@ -19,6 +19,7 @@ public class MinecraftPacketDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         var packetId = readVarInt(in);
+        if (packetId == -1) return;
 
         var state = ctx.channel().attr(STATE_KEY).get();
         if (state == null) {
