@@ -2,6 +2,7 @@ package codes.shiftmc.minecraft;
 
 import codes.shiftmc.minecraft.netty.MinecraftPacketDecoder;
 import codes.shiftmc.minecraft.netty.MinecraftPacketEncoder;
+import codes.shiftmc.minecraft.netty.Varint21FrameDecoder;
 import codes.shiftmc.minecraft.server.ProtocolState;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelHandlerAdapter;
@@ -37,6 +38,7 @@ public class NettyServer extends ChannelHandlerAdapter {
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             ch.pipeline()
+                                    .addLast("framer", new Varint21FrameDecoder())
                                     .addLast("encoder", new MinecraftPacketEncoder())
                                     .addLast("decoder", new MinecraftPacketDecoder());
 

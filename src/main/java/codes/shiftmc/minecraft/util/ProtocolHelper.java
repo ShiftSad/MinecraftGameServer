@@ -1,30 +1,60 @@
 package codes.shiftmc.minecraft.util;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.CorruptedFrameException;
 
 import java.nio.charset.StandardCharsets;
 
 public final class ProtocolHelper {
 
+    public static boolean canReadVarInt(ByteBuf buf) {
+        if (!buf.isReadable()) return false;
+        buf.markReaderIndex();
+
+        try {
+            int bytesChecked = 0;
+            byte read;
+            do {
+                if (!buf.isReadable()) {
+                    return false;
+                }
+                read = buf.readByte(); // Temporarily consume the byte
+                bytesChecked++;
+
+                if (bytesChecked > 5) return false; // Treat as cannot read / malformed
+            } while ((read & 0b10000000) != 0);
+
+            return true;
+        } finally {
+            buf.resetReaderIndex();
+        }
+    }
+
     public static int readVarInt(ByteBuf buf) {
         int numRead = 0;
         int result = 0;
         byte read;
+        int initialReaderIndex = buf.readerIndex(); // Store initial index for reset on INCOMPLETE only
+
         do {
+            // Check BEFORE reading if bytes are available
             if (!buf.isReadable()) {
-                buf.resetReaderIndex();
-                return -1;
+                // Not enough data to continue reading the VarInt
+                buf.readerIndex(initialReaderIndex); // Reset to before we started
+                throw new CorruptedFrameException("Cannot read full VarInt, buffer exhausted"); // Or return -1 if framer handles it
             }
+
             read = buf.readByte();
             int value = (read & 0b01111111);
             result |= (value << (7 * numRead));
 
             numRead++;
-            if (numRead > 5) { // A VarInt is at most 5 bytes long for 32-bit integers
-                buf.resetReaderIndex();
-                return -1;
+            if (numRead > 5) {
+                // Malformed VarInt - DO NOT RESET INDEX
+                // Throw exception so the framer knows it's bad data
+                throw new CorruptedFrameException("VarInt is too big (read " + numRead + " bytes)");
             }
-        } while ((read & 0b10000000) != 0);
+        } while ((read & 0b10000000) != 0); // Check continuation bit
 
         return result;
     }

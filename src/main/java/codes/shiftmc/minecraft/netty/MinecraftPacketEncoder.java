@@ -11,6 +11,8 @@ public class MinecraftPacketEncoder extends MessageToByteEncoder<ServerPacket> {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, ServerPacket packet, ByteBuf out) {
+        System.out.println("Sending packet: " + packet);
+
         var temp = ctx.alloc().buffer();
         try {
             writeVarInt(temp, packet.getId());
